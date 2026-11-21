@@ -1,0 +1,9 @@
+# Versions used and tested in the thesis (Python 3.11.9)
+paddlepaddle==3.2.0
+paddleocr==3.7.0
+opencv-python==5.0.0.93
+pillow==12.3.0
+numpy==2.3.5
+pandas==2.2.3
+rapidfuzz
+pymupdf==1.28.2

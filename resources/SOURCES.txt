@@ -1,0 +1,46 @@
+Replace the **whole content** of `station_list/SOURCES.txt` with this:
+
+```
+STATION LIST – SOURCES
+======================
+File: stations.csv (176 rows: 175 current Berlin U-Bahn stations + 1 closed station)
+Columns: current_name | old_names (separated by ";") | source (one or more links, separated by ";")
+Last checked: November 2026
+
+1. CURRENT STATIONS (175)
+- BVG route overviews for lines U1–U9, e.g. https://www.bvg.de/en/connections/route-overview/u2
+- Number of stations confirmed by BVG: "BVG in Zahlen 2025", U-Bahn: 175 stations
+  https://www.bvg.de/dam/jcr:b7825abf-7399-4ead-bdd1-5d315d94808a/BVG-in-Zahlen-2025.pdf
+
+2. CLOSED STATION (1)
+- Französische Straße (U6), closed on 4 December 2020, replaced by Unter den Linden.
+  BVG press release: https://www.bvg.de/de/unternehmen/medienportal/pressemitteilungen/berlin-tief-verbunden-u5-faehrt-bald-durch
+  UrbanRail.Net, line U6: https://urbanrail.net/eu/de/b/bln-u6.htm
+
+3. FORMER NAMES (24 stations)
+Each station's source is given in the "source" column of stations.csv. Sources used, in order of preference:
+- BVG press releases (official), e.g. https://www.bvg.de/de/unternehmen/medienportal/pressemitteilungen/grosser-bahnhof-fuer-glinka
+- Newspapers and specialist magazines: Der Tagesspiegel, tip Berlin, SIGNAL (Berliner Fahrgastverband IGEB)
+- Deutsche Digitale Bibliothek (photo archive): https://www.deutsche-digitale-bibliothek.de
+- UrbanRail.Net line pages by Robert Schwandl (author of books on the Berlin U-Bahn lines):
+  U2 https://urbanrail.net/eu/de/b/bln-u2.htm | U4 https://urbanrail.net/eu/de/b/bln-u4.htm
+  U5 https://urbanrail.net/eu/de/b/bln-u5.htm | U6 https://urbanrail.net/eu/de/b/bln-u6.htm
+  U8 https://urbanrail.net/eu/de/b/bln-u8.htm
+- English Wikipedia station pages, only where no other source was found
+  (Freie Universität (Thielplatz), Kaulsdorf-Nord, Louis-Lewin-Straße, Schwartzkopffstraße, Stadtmitte, Warschauer Straße)
+
+4. RULES
+- Only U-Bahn stations are included; S-Bahn and mainline stations are not.
+- Closed U-Bahn stations are included, because BVG's plan archive also contains plans of them.
+- A former name is only added if a source confirms it.
+- Some former names are common words (Hauptstraße, Tegel, Kreuzberg, Flughafen, Stadion, Knie)
+  and may also appear on plans as street or district names.
+```
+
+**What it contains, briefly:**
+1. Where the **175 current stations** come from (BVG)
+2. The **closed station** and its official source
+3. Which **kinds of sources** were used for the former names, in order of trust, and where Wikipedia was still needed
+4. The **rules** you decided on (only U-Bahn, closed stations included, only confirmed names), so anyone reading understands the list
+
+Save it (`Ctrl + S`), then commit together with the new `stations.csv`.

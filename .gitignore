@@ -1,0 +1,14 @@
+# Plans and results are confidential: never commit them
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+*.tif
+*.tiff
+*.TIF
+*.pdf
+*.csv
+!resources/stations.csv
+*.xlsx
+__pycache__/
+.ipynb_checkpoints/
