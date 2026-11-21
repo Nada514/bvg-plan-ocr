@@ -5,6 +5,15 @@ Plan numbers are of three kinds: drawing numbers ("UBwE/374", "Zeichnung Nr. ...
 sheet numbers ("Blatt Nr. 1") and archive numbers (stamp at the edge, e.g. "S510-023").
 They are read only from the text on the plan, never from the file name.
 The structure number is derived from an archive number outside the S series ("D73-006" -> "D073").
+
+Version 2 (after the evaluation on the test plans):
+  P1  texts with a telephone or fax number are ignored (a phone number is never a plan number);
+  P2  all spellings of the drawing-number label are accepted ("Zg.-Nr.", "Zg. Nr.", "Zeichng. Nr.");
+  P3  the value after a drawing-number label may contain letters ("Zeichnung Nr. G-Notausstieg E11-02a"),
+      and a value found NEXT TO a drawing-number label must contain a digit;
+  P4  a text that consists ONLY of "Blatt" + number is a sheet number ("Blatt 9."), unlike "siehe Blatt …";
+  P5  a text that consists ONLY of a short code (1-2 capitals + 3 digits, e.g. "DE-016", "E 001")
+      in the title block is a plan number.
 """
 import re
 
@@ -13,9 +22,9 @@ MAX_DIFF = 2
 TITLE_ZONE = (0.80, 0.70)
 
 SHEET_RE = re.compile(r"\b(?:blatt|bl)\s*\.?\s*[nh]r\s*\.?\s*(\d[\d.]*(?:\s?[a-z]{1,4}\b)?)", re.I)
-LABEL_ONLY_RE = re.compile(r"^\W*(?:(blatt|bl)|(zeichnungs?|zeichn|zg|plan))\s*[-.]?\s*[nh]r\s*\.?\s*:?\W*$", re.I)
+LABEL_ONLY_RE = re.compile(r"^\W*(?:(blatt|bl)|(zeichn\w*|zg|plan))\s*[-.\s]*\s*[nh]r\s*\.?\s*:?\W*$", re.I)  # P2
 DRAWING_RES = [
-    re.compile(r"\b(?:zg|zeichn\w*|plan)\s*[-.]?\s*nr\s*\.?\s*:?\s*(\d[\d\s./-]*\d)", re.I),
+    re.compile(r"\b(?:zg|zeichn\w*|plan)\s*[-.\s]*\s*nr\s*\.?\s*:?\s*(\d[\d\s./-]*\d)", re.I),   # P2
     re.compile(r"\b(UBw\s?[A-Z]?\s?/?\s?\d[\d ]{1,8}\d)", re.I),
     re.compile(r"\b([A-Z]{1,3}\s?/\s?[A-Z]{1,3}\s?-\s?\d{1,3}(?:\s?-\s?\d{1,3})+)"),
     re.compile(r"\b(M\.\s?\d{3,5})(?![\d:,.])"),
@@ -24,6 +33,13 @@ ARCHIVE_RE = re.compile(r"(?<![\w.,/])([A-Z0-9£$§])\s?(\d{2,3})\s?[-–]\s?(\d
 LETTER_FIX = {"0": "D", "8": "B", "2": "S", "5": "S", "£": "S", "$": "S", "§": "S"}
 
 ARCHIVE_PARTS = re.compile(r"^([A-Z])(\d{2,3})-(\d{3})$")
+
+# Version 2
+PHONE_RE = re.compile(r"\b(?:tel|fax|telefon|fon)\b", re.I)                                           # P1
+DRAWING_CODE_RE = re.compile(r"\b(?:zg|zeichn\w*|plan)\s*[-.\s]*\s*nr\s*\.?\s*:?\s*"
+                             r"([A-Za-z][\w./-]*(?:\s[\w./-]+)?)\s*$", re.I)                            # P3
+SHEET_ALONE_RE = re.compile(r"^\W*blatt\s+(\d[\w.]*?)\.?\W*$", re.I)                                 # P4
+CODE_ALONE_RE = re.compile(r"^\W*([A-Z]{1,2})[\s-]?(\d{3})\W*$")                                       # P5
 NO_STRUCTURE_LETTERS = {"S"}
 
 
@@ -57,11 +73,13 @@ def is_value_box(r, label_id):
             and bool(re.search(r"[A-Za-z0-9]", t)) and not LABEL_ONLY_RE.match(t))
 
 
-def value_next_to(label, b):
+def value_next_to(label, b, need_digit=False):
     h = label.height
     best, best_dist = None, None
     for i, r in b.iterrows():
         if not is_value_box(r, label.name):
+            continue
+        if need_digit and not re.search(r"\d", str(r.text)):     # P3
             continue
         same_row = min(label.y2, r.y2) - max(label.y1, r.y1) >= 0.5 * min(h, r.height)
         right = same_row and 0 <= r.x1 - label.x2 <= 3 * h
@@ -110,11 +128,12 @@ def extract_numbers(ocr):
 
     b = box_table(ocr)
     b = b[b["ocr_score"] >= MIN_SCORE]
+    b = b[~b["text"].astype(str).str.contains(PHONE_RE)]                 # P1
     zone = b[(b["x_rel"] >= TITLE_ZONE[0]) & (b["y_rel"] >= TITLE_ZONE[1])]
     for _, lab in zone.iterrows():
         m = LABEL_ONLY_RE.match(str(lab["text"]))
         if m:
-            parts = value_next_to(lab, zone)
+            parts = value_next_to(lab, zone, need_digit=not m.group(1))
             if parts:
                 kind = "sheet" if m.group(1) else "drawing"
                 value = clean(" ".join(str(p.text) for p in parts))
@@ -128,6 +147,16 @@ def extract_numbers(ocr):
         for rx in DRAWING_RES:
             for m in rx.finditer(t):
                 add("drawing", clean(m.group(1)), r["ocr_score"])
+        if not DRAWING_RES[0].search(t):                                   # P3
+            m = DRAWING_CODE_RE.search(t)
+            if m and re.search(r"\d", m.group(1)) and len(m.group(1)) <= 30:
+                add("drawing", clean(m.group(1)), r["ocr_score"])
+        m = SHEET_ALONE_RE.match(t)                                        # P4
+        if m:
+            add("sheet", "Blatt " + m.group(1), r["ocr_score"])
+        m = CODE_ALONE_RE.match(t)                                         # P5
+        if m and r["x_rel"] >= TITLE_ZONE[0] and r["y_rel"] >= TITLE_ZONE[1]:
+            add("drawing", clean(t), r["ocr_score"])
         for m in ARCHIVE_RE.finditer(t):
             first, mid, last = m.groups()
             if not first.isalpha():

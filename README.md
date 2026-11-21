@@ -4,6 +4,9 @@ This program reads scanned historical construction plans of the BVG (TIFF or PDF
 extracts eight metadata fields from the text written on each plan. It was developed in the
 Bachelor's thesis of Nada ElNaggar (HTW Berlin, supervisor Prof. Dr. Katharina Simbeck, 2026).
 
+**Version 2.0.** Version 1.0 is the version evaluated in the thesis; version 2.0 contains improved
+rules for the creation date and the plan number (see "Versions" below).
+
 The results are a **suggestion that saves typing, not a final answer**: values that the
 program is unsure about are marked for review, and some fields stay empty when the text could
 not be read. Please read "What to expect" before using the results.
@@ -79,30 +82,35 @@ Multiple values in one cell are separated by `;`. An empty cell means: not found
 
 ## What to expect (results on 30 unseen test plans)
 
-The program was tested once on 30 plans that were not used during development, and the
+Version 1.0 was tested once on 30 plans that were not used during development, and the
 results were compared with BVG's metadata table:
 
-| Field | Result on the test plans | Advice |
-|---|---|---|
-| Station | 22 of 30 correct | Check stations marked "without a station marker" |
-| Scale | Found on 19 of 26 plans – **all 19 correct** | Values can be trusted; empty = not readable |
-| Creation date | Exact on 11 of 25, correct year on 17 of 25 | **Always check**: plans carry several dates |
-| Stairs | 27 of 30 correct | Stairs that are only drawn (no label) are not found |
-| Plan title | Complete on 12 of 30 | Titles marked for review are usually incomplete |
-| Plan number | Found on 15 of 29 plans, 12 of them correct | Check; some number formats are not known |
-| Structure number | Derived on 7 plans, 6 correct | Only from archive stamps outside the S series |
-| Keywords | 71 % of BVG's keywords found | Good for full-text search |
+| Field | Version 1.0 on the test plans | Version 2.0 on the same plans* | Advice |
+|---|---|---|---|
+| Station | 22 of 30 correct | 22 of 30 | Check stations marked "without a station marker" |
+| Scale | Found on 19 of 26 plans – **all 19 correct** | unchanged | Values can be trusted; empty = not readable |
+| Creation date | Correct to the month on 11 of 25, 4 wrong | 14 of 25, 2 wrong | **Check**: plans carry several dates |
+| Stairs | 27 of 30 correct | unchanged | Stairs that are only drawn (no label) are not found |
+| Plan title | Complete on 12 of 30 | unchanged | Titles marked for review are usually incomplete |
+| Plan number | BVG's number found on 12 of 29 | 18 of 29 | Check; some number formats are not known |
+| Structure number | Derived on 7 plans, 6 correct | 6 correct, 0 wrong | Only from archive stamps outside the S series |
+| Keywords | 71 % of BVG's keywords found | unchanged | Good for full-text search |
+
+\* Version 2.0 was improved using the errors found on these test plans, so its numbers are
+**not an independent test**. They show the effect of the changes, not the expected result on
+new plans. On the 12 development plans, version 2.0 gives the same results as version 1.0.
 
 ### Known limitations
 - **Only written text** is used. Anything only drawn (stairs, rooms) cannot be found.
 - **Old, hand-lettered or faint text** is often misread or not read.
-- **Creation date:** the program takes the earliest complete date on the plan. If the plan
-  mentions a related drawing or an earlier event, this can be the wrong date. The labelled
-  date in the title block ("Entworfen", "gezeichnet") is the reliable one.
-- **Plan numbers:** the program knows the number formats of the development plans (e.g.
-  `UBwE/374`, `Blatt Nr. 1`, archive stamps like `S510-023`). Other formats (e.g. `SK 4995`,
-  `Mh-PG-01-a`, `Blatt 9` without "Nr.") are not found. A telephone number starting with
-  `030-` can be mistaken for an archive stamp (`D30-…`).
+- **Creation date:** the program prefers a date next to "bearbeitet", "gezeichnet",
+  "entworfen", "aufgestellt" or "gez."; dates of referenced documents ("vom …") are skipped.
+  Otherwise it takes the earliest complete date, which can be the date of a revision or of
+  another document. Handwritten or misread dates (e.g. "4927" for 1927) cannot be corrected.
+- **Plan numbers:** the program knows labelled numbers ("Zeichnung Nr.", "Zg.-Nr.",
+  "Blatt Nr."), typical BVG formats (`UBwE/374`, archive stamps like `S510-023`), and short
+  codes standing alone in the title block (`DE-016`, `E 001`). Other formats (e.g. sketch
+  numbers `SK 4995`) are not found. Several values in one cell mean several numbers were found.
 - **Rotation:** a plan is turned automatically only if the orientation model is very sure;
   plans scanned sideways are otherwise read sideways (worse results).
 
@@ -165,8 +173,21 @@ RapidFuzz · PyMuPDF 1.28.2 (exact versions in `requirements.txt`).
 - The program runs completely on the local computer; no data is sent anywhere (internet is
   only needed once to download the models).
 
+### Versions
+- **1.0** – rules developed on 12 development plans and frozen; evaluated once on 30 unseen
+  test plans (results in the thesis).
+- **2.0** – general improvements after the error analysis of the test plans:
+  dates of referenced documents ("vom …") are skipped; dates next to a creation label are
+  preferred; telephone and fax numbers are ignored; all spellings of the drawing-number label
+  ("Zg.-Nr.") and codes with letters after it are accepted; standalone "Blatt + number" and
+  standalone short codes in the title block are read as plan numbers; when one station name
+  contains another, the longer one is chosen. Not changed on purpose: the scale rule (accepting
+  misread forms would create false scales from dimensions) and sketch numbers ("SK …" also
+  appears as a reference to other sheets).
+
 ### Time period
-Development October–November 2026; final test 21.11.2026.
+Development October–November 2026; final test of version 1.0 on 21.11.2026; version 2.0 on
+21.11.2026.
 
 ### Author and license
 Author: Nada ElNaggar, HTW Berlin (Bachelor's thesis, Business Informatics).

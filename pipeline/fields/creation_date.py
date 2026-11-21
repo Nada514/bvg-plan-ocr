@@ -7,6 +7,13 @@ complete date. A year alone is used only if nothing better exists.
 Only change for unseen plans: the latest accepted year was fixed to 2026 (the year of the thesis);
 it is now the current year, so that plans drawn after 2026 can also get a date. For all plans
 processed in 2026 the result is identical.
+
+Version 2 (after the evaluation on the test plans):
+  D1  dates of REFERENCED documents are skipped ("vom 30.01.92", "v. 16.03.1994", "... gehörig");
+  D2  dates next to a CREATION label ("bearbeitet", "gezeichnet", "entworfen", "aufgestellt",
+      "gez.") are preferred over all other dates. Check labels ("geprüft") do not count.
+      "Berlin, den" is NOT a creation label: on the development plans it also marks signature and
+      approval dates (checked on UBwE374: "Berlin, den 2.2.67" is not the creation date 21.12.1966).
 """
 import datetime
 import re
@@ -41,6 +48,12 @@ CHANGE_RE = re.compile(r"erg(ä|a|ae)nzt|[g0](e|ä)?(ä|a|ae)ndert|letzt\w*\s*st
 ROMAN_PAT = "xii|xi|x|ix|viii|vii|vi|v|iv|iii|ii|i"
 DM_RE = re.compile(rf"(?<![\d.,])({D}{{1,2}})\s?\.\s?({D}{{1,2}}|{ROMAN_PAT})\s?\.(?!\s?\d)", re.IGNORECASE)
 DATE_WORD_RE = re.compile(r"\b(den|d\.|am|datum|gez|gezeichnet|bearb|berlin)", re.IGNORECASE)
+
+# Version 2
+REFERENCE_RE = re.compile(r"\bvom\b|\bv\.\s*(?=\d)|geh[öo]r", re.IGNORECASE)                       # D1
+CREATION_LABEL_RE = re.compile(r"bearb\w*|gezeichnet|\bgez\b\.?|\bgz\b|entw[oü]rfen|\bentw\b|aufgest\w*",
+                               re.IGNORECASE)                                                             # D2
+CHECK_LABEL_RE = re.compile(r"gepr|pr[üu]f", re.IGNORECASE)
 
 
 def num(s):
@@ -94,8 +107,21 @@ def vertical_pairs(ocr, max_gap=1.5):
 
 
 def before_change_word(t):
-    """Keep only the text BEFORE a change word. Dates after it are change dates."""
-    return CHANGE_RE.split(t)[0]
+    """Keep only the text BEFORE a change word (dates after it are change dates) and, in version 2,
+    BEFORE a reference word (dates after "vom" belong to another document)."""
+    return REFERENCE_RE.split(CHANGE_RE.split(t)[0])[0]
+
+
+def labelled_dates(t):
+    """Version 2 (D2): complete dates that follow a creation label in the same text,
+    up to the next check label ('geprüft')."""
+    found = set()
+    for m in CREATION_LABEL_RE.finditer(t):
+        part = CHECK_LABEL_RE.split(t[m.end():])[0]
+        found |= {d for d in dates_in(part) if d[1]}
+        for month, year in MY_RE.findall(part):
+            found.add((int(year), int(month), 0))
+    return found
 
 
 def all_dates(ocr):
@@ -105,6 +131,7 @@ def all_dates(ocr):
     texts += vertical_pairs(ocr)                        # box + the box below it
     for t in texts:
         t = before_change_word(t)
+        LABELLED.update(labelled_dates(t))
         found |= dates_in(t)
         for month, year in MY_RE.findall(t):
             found.add((int(year), int(month), 0))
@@ -151,8 +178,16 @@ def year_near(ocr, r, max_gap=1.5, side=2.0):
     return None
 
 
+LABELLED = set()   # filled by all_dates(): dates found next to a creation label (version 2)
+
+
 def best_creation_date3(ocr):
+    LABELLED.clear()
     dates = all_dates(ocr)
+    labelled = [d for d in LABELLED if 1880 <= d[0] <= LATEST_YEAR]
+    if labelled:                                                  # version 2 (D2)
+        y, m, d = min(labelled)
+        return (d or None, m, y), ("day+month+year" if d else "month+year") + " (labelled)"
     joined, no_year = set(), []
     for day, month, r in day_months(ocr):
         y = year_near(ocr, r)

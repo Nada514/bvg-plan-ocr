@@ -87,7 +87,12 @@ def collect_hits(ocr, mode, threshold=settings.FUZZY_THRESHOLD):
 
 
 def winner(hits):
-    return max(hits, key=lambda s: (hits[s]["marker"], len(hits[s]["boxes"]), hits[s]["best"]))
+    key = lambda s: (hits[s]["marker"], len(hits[s]["boxes"]), hits[s]["best"])
+    best = max(hits, key=key)                                    # decision of version 1
+    # Version 2 (S1): if a tied station name CONTAINS the chosen one, the longer, more specific name wins
+    # ("Rathaus Neukölln" instead of "Neukölln"). Unrelated tied names keep the version 1 decision.
+    longer = [s for s in hits if s != best and key(s) == key(best) and norm(best) in norm(s)]
+    return max(longer, key=len) if longer else best
 
 
 def identify_full(ocr, mode="fuzzy", threshold=settings.FUZZY_THRESHOLD):

@@ -5,6 +5,8 @@ Changing them changes the results, so only change them on purpose.
 """
 from pathlib import Path
 
+VERSION = "2.0"   # 1.0 = thesis version (evaluated on the test plans); 2.0 = improved rules for BVG
+
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 STATION_LIST = PACKAGE_DIR / "resources" / "stations.csv"
 
