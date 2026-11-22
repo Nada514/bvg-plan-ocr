@@ -38,5 +38,5 @@ RECOGNITION_BATCH = 16
 FUZZY_THRESHOLD = 85
 
 # --- Output files ------------------------------------------------------------------
-CSV_SEPARATOR = ";"          # ';' so that German Excel opens the files in columns
+CSV_SEPARATOR = ","          # standard CSV separator; for reading, open the Excel file instead
 CSV_ENCODING = "utf-8-sig"   # keeps umlauts readable in Excel

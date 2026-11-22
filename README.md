@@ -39,11 +39,12 @@ The first run downloads the text recognition models automatically (internet need
    python run_pipeline.py
    ```
 3. Wait. Each plan takes about 0.5–3 minutes. One line per plan is printed when it is done.
-4. Open the results in the folder **`output`** (double-click opens them in Excel):
+4. Open the results in the folder **`output`**:
 
 | File | Content |
 |---|---|
-| `bvg_fields.csv` | **The main result.** One row per plan with the 8 fields. |
+| `BVG_Plan_Metadata.xlsx` | **The main result – open this one.** One row per plan with all fields, formatted for reading, with a second sheet "Column Guide". |
+| `BVG_Plan_Metadata.csv` | The same table as a plain CSV file (comma-separated, UTF-8), for importing into other systems. |
 | `bvg_ocr_full.csv` | **Everything the program read**: one row per text region of every plan, with its position. Use it to search for any word or number. |
 | `processing_log.csv` | Technical details per plan (resolution, rotation, time, errors). |
 
@@ -53,30 +54,36 @@ The first run downloads the text recognition models automatically (internet need
 - **Other folders:** `python run_pipeline.py --input "D:\Scans" --output "D:\Results"`
 - **A plan shows `failed`:** usually the computer ran out of memory. Close other programs and
   run the same command again; only the failed plans are read again.
+- **Close the result files in Excel before running again.** Otherwise Windows does not allow the
+  program to overwrite them (error message `PermissionError`).
 - **Never delete** the folder `output\_work` while a run is going on: it holds the recognized
   text of every plan.
 
 ---
 
-## Part 2 – How to read `bvg_fields.csv`
+## Part 2 – How to read `BVG_Plan_Metadata` (Excel and CSV)
 
 | Column | Meaning |
 |---|---|
-| `file_name`, `folder` | The plan file and its subfolder in `input` |
-| `station` | Current name of the U-Bahn station the plan belongs to (empty = no station found) |
-| `station_name_on_plan` | The station name as written on the plan (can be a former name, e.g. "Danziger Straße") |
-| `scale` | Scale(s) written on the plan, e.g. `1:50`. Several values = detail drawings with own scales |
-| `creation_date` | Date of the plan as `DD.MM.YYYY`; `XX` = part not known (e.g. `XX.12.1961`) |
-| `stairs` | `Yes` / `No` / `Unsure`: is a stairs word ("Treppe", "Fahrtreppe" …) written on the plan? |
-| `stairs_type` | `Stairs`, `Escalator` or `Stairs + escalator` |
-| `plan_title` | Title as written on the plan; ` \| ` marks a new line on the plan |
-| `plan_number` | Drawing, sheet ("Blatt Nr.") and archive numbers found on the plan, separated by `;` |
-| `structure_number` | Structure number derived from an archive stamp (e.g. stamp `D73-006` → `D073`) |
-| `keywords` | All clean lines of text on the plan, separated by `;` – for searching |
-| `needs_review` | `Yes` = at least one field should be checked by a person |
-| `review_notes` | Which field and why, e.g. `creation date: no date found` |
+| File Name | The plan file in `input` (with its subfolder in front, if it is in one) |
+| Station (Current Name) | Current name of the U-Bahn station the plan belongs to (empty = no station found) |
+| Station Name on Plan | The station name as written on the plan (can be a former name, e.g. "Danziger Straße") |
+| Scale | Scale(s) written on the plan, e.g. `1:50`. Several values = detail drawings with own scales |
+| Creation Date | Date of the plan as `DD.MM.YYYY`; `XX` = part not known (e.g. `XX.12.1961`) |
+| Stairs / Escalator | `Yes` / `No` / `Unsure`: is a stairs word ("Treppe", "Fahrtreppe" …) written on the plan? |
+| Stairs Type | `Stairs`, `Escalator` or `Stairs + escalator` |
+| Plan Title | Title as written on the plan; ` \| ` marks a new line on the plan |
+| Plan Number | Drawing, sheet ("Blatt Nr.") and archive numbers found on the plan, separated by `;` |
+| Structure Number | Structure number derived from an archive stamp (e.g. stamp `D73-006` → `D073`) |
+| Needs Review | `Yes` = a value **was found but may be wrong** – a person should check it |
+| Review Notes | Which value should be checked and why, e.g. `station: station found without a station marker` |
+| Missing Fields | Fields that were **not found** on the plan (their cells are empty) – for information only |
+| Keywords (All Text Read) | All clean lines of text on the plan, separated by `;` – for full-text search |
 
-Multiple values in one cell are separated by `;`. An empty cell means: not found.
+- **Needs Review vs. Missing Fields:** an empty cell needs no check (there is nothing to check); it is
+  listed in *Missing Fields*. *Needs Review* marks only values that are there but uncertain.
+- Multiple values in one cell are separated by `;`. An empty cell means: not found.
+- Station names, titles and keywords are kept in German, exactly as written on the plans.
 
 ---
 
@@ -98,7 +105,8 @@ results were compared with BVG's metadata table:
 
 \* Version 2.0 was improved using the errors found on these test plans, so its numbers are
 **not an independent test**. They show the effect of the changes, not the expected result on
-new plans. On the 12 development plans, version 2.0 gives the same results as version 1.0.
+new plans. On the 12 development plans, version 2.0 gives the same results as version 1.0, except
+one plan number (one additional number that is written on the plan was found).
 
 ### Known limitations
 - **Only written text** is used. Anything only drawn (stairs, rooms) cannot be found.
@@ -151,13 +159,14 @@ bvg_plan_ocr/
     ├── settings.py          all fixed settings (resolution, thresholds, models)
     ├── plan_files.py        finding plans, PDF conversion, reading the resolution
     ├── ocr_worker.py        rotation, detection, cropping, recognition of one plan
+    ├── export.py            writes BVG_Plan_Metadata.xlsx and .csv (column names, review, layout)
     └── fields/              one file per field (station, scale, creation_date, stairs,
                              title, plan_number incl. structure number, keywords)
 ```
 
 ### Tools and versions
 Python 3.11.9 · PaddleOCR 3.7.0 · PaddlePaddle 3.2.0 · OpenCV · Pillow · NumPy · pandas ·
-RapidFuzz · PyMuPDF 1.28.2 (exact versions in `requirements.txt`).
+RapidFuzz · PyMuPDF 1.28.2 · openpyxl 3.1.5 (exact versions in `requirements.txt`).
 
 ### Quality assurance
 - All rules were developed on 12 development plans and frozen before the test.
@@ -184,10 +193,14 @@ RapidFuzz · PyMuPDF 1.28.2 (exact versions in `requirements.txt`).
   contains another, the longer one is chosen. Not changed on purpose: the scale rule (accepting
   misread forms would create false scales from dimensions) and sketch numbers ("SK …" also
   appears as a reference to other sheets).
+  Output of version 2.0: formatted Excel file and clean CSV with English column names
+  (`BVG_Plan_Metadata`, replaces `bvg_fields.csv`); comma as CSV separator; "not found" is reported
+  in the new column *Missing Fields*, and *Needs Review* marks only values that were found but may
+  be wrong.
 
 ### Time period
 Development October–November 2026; final test of version 1.0 on 21.11.2026; version 2.0 on
-21.11.2026.
+21.11.2026; new output files and run on all 42 plans on 22.11.2026.
 
 ### Author and license
 Author: Nada ElNaggar, HTW Berlin (Bachelor's thesis, Business Informatics).

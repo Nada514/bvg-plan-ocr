@@ -5,9 +5,10 @@
 1. Put the plans (TIFF or PDF, any file name, subfolders allowed) into the folder  input/
 2. Run the command above.
 3. The results appear in the folder  output/ :
-     bvg_fields.csv       one row per plan with the 8 extracted fields (clean table)
-     bvg_ocr_full.csv     everything text recognition read: one row per text region of every plan
-     processing_log.csv   technical details per plan (rotation, resolution, time, errors)
+     BVG_Plan_Metadata.xlsx   one row per plan with the extracted fields, formatted in BVG colours (for reading)
+     BVG_Plan_Metadata.csv    the same table as a plain CSV file (for importing into other systems)
+     bvg_ocr_full.csv         everything text recognition read: one row per text region of every plan
+     processing_log.csv       technical details per plan (rotation, resolution, time, errors)
 
 Plans that were already read are skipped when the command is run again (the OCR tables are kept
 in output/_work/). Use  --redo  to read all plans again. Other folders:  --input  and  --output .
@@ -23,6 +24,7 @@ from pathlib import Path
 import pandas as pd
 
 from pipeline import settings
+from pipeline.export import write_results
 from pipeline.fields import FIELD_COLUMNS, extract_all, load_ocr_table
 from pipeline.plan_files import convert_pdf, find_plans, plan_id
 
@@ -106,13 +108,12 @@ def main():
 
     output_dir.mkdir(parents=True, exist_ok=True)
     csv = dict(index=False, sep=settings.CSV_SEPARATOR, encoding=settings.CSV_ENCODING)
-    pd.DataFrame(clean_rows).to_csv(output_dir / "bvg_fields.csv", **csv)
+    review = write_results(pd.DataFrame(clean_rows), output_dir)   # Excel file + clean CSV
     if ocr_parts:
         pd.concat(ocr_parts, ignore_index=True).to_csv(output_dir / "bvg_ocr_full.csv", **csv)
     pd.DataFrame(log_rows).to_csv(output_dir / "processing_log.csv", **csv)
 
     failed = sum(s == "failed" for _, s, _ in status.values())
-    review = sum(r["needs_review"] == "Yes" for r in clean_rows)
     print(f"Done. Plans: {len(plans)} | failed: {failed} | marked for review: {review}")
     print(f"Results in: {output_dir}")
 
