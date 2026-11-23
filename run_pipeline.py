@@ -7,8 +7,9 @@
 3. The results appear in the folder  output/ :
      BVG_Plan_Metadata.xlsx   one row per plan with the extracted fields, formatted in BVG colours (for reading)
      BVG_Plan_Metadata.csv    the same table as a plain CSV file (for importing into other systems)
-     bvg_ocr_full.csv         everything text recognition read: one row per text region of every plan
+     BVG_Plan_Text.csv        all text read on each plan, with the area of the plan and a reading quality
      processing_log.csv       technical details per plan (rotation, resolution, time, errors)
+     technical/bvg_ocr_full.csv   full OCR output with positions and scores (for checking and further work)
 
 Plans that were already read are skipped when the command is run again (the OCR tables are kept
 in output/_work/). Use  --redo  to read all plans again. Other folders:  --input  and  --output .
@@ -24,7 +25,7 @@ from pathlib import Path
 import pandas as pd
 
 from pipeline import settings
-from pipeline.export import write_results
+from pipeline.export import plan_text, write_plan_text, write_results
 from pipeline.fields import FIELD_COLUMNS, extract_all, load_ocr_table
 from pipeline.plan_files import convert_pdf, find_plans, plan_id
 
@@ -85,7 +86,7 @@ def main():
 
     # ---- Part 2: the 8 fields and the output files ----
     print("\nExtracting the fields ...")
-    clean_rows, ocr_parts, log_rows = [], [], []
+    clean_rows, ocr_parts, text_parts, log_rows = [], [], [], []
     for path in plans:
         pid, state, error = status[path]
         folder = str(path.parent.relative_to(input_dir))
@@ -102,6 +103,8 @@ def main():
 
         ocr = load_ocr_table(work / "ocr_tables" / f"{pid}.csv")
         clean_rows.append({**base, **extract_all(ocr)})
+        label = f"{base['folder']}/{base['file_name']}" if base["folder"] else base["file_name"]
+        text_parts.append(plan_text(ocr, label))
         dump = ocr[["box_id", "text", "ocr_score", "x1", "y1", "x2", "y2", "vertical", "turn", "score"]].rename(
             columns={"turn": "read_turned", "score": "detection_score"})
         ocr_parts.append(dump.assign(**base)[list(base) + list(dump.columns)])
@@ -109,8 +112,11 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     csv = dict(index=False, sep=settings.CSV_SEPARATOR, encoding=settings.CSV_ENCODING)
     review = write_results(pd.DataFrame(clean_rows), output_dir)   # Excel file + clean CSV
+    write_plan_text(text_parts, output_dir)                          # all text, for staff
+    technical = output_dir / "technical"
+    technical.mkdir(exist_ok=True)
     if ocr_parts:
-        pd.concat(ocr_parts, ignore_index=True).to_csv(output_dir / "bvg_ocr_full.csv", **csv)
+        pd.concat(ocr_parts, ignore_index=True).to_csv(technical / "bvg_ocr_full.csv", **csv)
     pd.DataFrame(log_rows).to_csv(output_dir / "processing_log.csv", **csv)
 
     failed = sum(s == "failed" for _, s, _ in status.values())

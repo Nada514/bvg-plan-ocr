@@ -1,7 +1,9 @@
-"""Writes the main result for BVG staff in two formats.
+"""Writes the results for BVG staff.
 
     BVG_Plan_Metadata.csv    clean table, one row per plan, English column names (for importing)
     BVG_Plan_Metadata.xlsx   the same table, formatted in BVG colours, with a column guide (for reading)
+    BVG_Plan_Text.csv        all text read on each plan, grouped by area of the plan, with a reading
+                             quality in words (for searching any word)
 
 Only the presentation changes here: the values come unchanged from the field rules.
 The review notes are split into two kinds:
@@ -55,6 +57,12 @@ COLUMNS = [
      "Text is kept as read by OCR, so it can contain reading errors."),
 ]
 EXCEL_CELL_LIMIT = 32000   # Excel cannot hold more characters in one cell
+
+# --- All text read (BVG_Plan_Text.csv) ---------------------------------------------------
+PLAN_TEXT_COLUMNS = ["File Name", "Area on Plan", "Text", "Reading Quality"]
+QUALITY_HIGH, QUALITY_MEDIUM = 0.90, 0.60   # OCR confidence -> High / Medium / Low
+ROWS3 = ("top", "middle", "bottom")
+COLS3 = ("left", "centre", "right")
 
 
 # Fields listed in "Missing Fields" when their cell is empty (structure number is left out on purpose:
@@ -185,3 +193,41 @@ def write_excel(table, path):
     guide.column_dimensions["B"].width = 90
 
     wb.save(path)
+
+
+def reading_quality(score):
+    """Turns the OCR confidence (0 to 1) into words that staff understand."""
+    if score >= QUALITY_HIGH:
+        return "High"
+    if score >= QUALITY_MEDIUM:
+        return "Medium"
+    return "Low"
+
+
+def plan_text(ocr, file_label):
+    """All text of one plan for staff, without technical columns.
+    Area on Plan: the plan is divided into 3 x 3 areas (top/middle/bottom x left/centre/right),
+    measured from the outermost text on the plan, so the area is approximate.
+    Order: area by area (top left first), and inside an area line by line, left to right."""
+    t = ocr[["text", "ocr_score", "x1", "y1", "x2", "y2"]].copy()
+    t["text"] = t["text"].fillna("").astype(str).str.strip()
+    t = t[t["text"] != ""]
+    if t.empty:
+        return pd.DataFrame(columns=PLAN_TEXT_COLUMNS)
+    cx, cy = (t["x1"] + t["x2"]) / 2, (t["y1"] + t["y2"]) / 2
+    left, right, top, bottom = t["x1"].min(), t["x2"].max(), t["y1"].min(), t["y2"].max()
+    t["_col"] = ((cx - left) / max(right - left, 1) * 3).clip(0, 2.999).astype(int)
+    t["_row"] = ((cy - top) / max(bottom - top, 1) * 3).clip(0, 2.999).astype(int)
+    line_height = max(float((t["y2"] - t["y1"]).median()), 1.0)
+    t["_line"] = (cy / line_height).round()
+    t = t.sort_values(["_row", "_col", "_line", "x1"], kind="stable")
+    area = ["middle" if (r, c) == (1, 1) else f"{ROWS3[r]} {COLS3[c]}" for r, c in zip(t["_row"], t["_col"])]
+    return pd.DataFrame({"File Name": file_label, "Area on Plan": area, "Text": t["text"].tolist(),
+                         "Reading Quality": [reading_quality(s) for s in t["ocr_score"]]})
+
+
+def write_plan_text(parts, output_dir):
+    """Writes BVG_Plan_Text.csv (one row per piece of text, all plans)."""
+    table = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=PLAN_TEXT_COLUMNS)
+    table.to_csv(output_dir / "BVG_Plan_Text.csv", index=False,
+                 sep=settings.CSV_SEPARATOR, encoding=settings.CSV_ENCODING)
