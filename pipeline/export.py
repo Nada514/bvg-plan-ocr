@@ -1,8 +1,8 @@
 """Writes the results for BVG staff.
 
-    BVG_Plan_Metadata.csv    clean table, one row per plan, English column names (for importing)
-    BVG_Plan_Metadata.xlsx   the same table, formatted in BVG colours, with a column guide (for reading)
-    BVG_Plan_Text.csv        all text read on each plan, grouped by area of the plan, with a reading
+    Plan_Results.csv         clean table, one row per plan, English column names (for importing)
+    Plan_Results.xlsx        the same table, formatted in BVG colours, with a column guide (for reading)
+    Text_Search.csv          all text read on each plan, grouped by area of the plan, with a reading
                              quality in words (for searching any word)
 
 Only the presentation changes here: the values come unchanged from the field rules.
@@ -58,7 +58,7 @@ COLUMNS = [
 ]
 EXCEL_CELL_LIMIT = 32000   # Excel cannot hold more characters in one cell
 
-# --- All text read (BVG_Plan_Text.csv) ---------------------------------------------------
+# --- All text read (Text_Search.csv) ---------------------------------------------------
 PLAN_TEXT_COLUMNS = ["File Name", "Area on Plan", "Text", "Reading Quality"]
 QUALITY_HIGH, QUALITY_MEDIUM = 0.90, 0.60   # OCR confidence -> High / Medium / Low
 ROWS3 = ("top", "middle", "bottom")
@@ -94,9 +94,9 @@ def write_results(fields, output_dir):
 
     table = fields.reindex(columns=[c[0] for c in COLUMNS]).fillna("").astype(str)
     table.columns = [c[1] for c in COLUMNS]
-    table.to_csv(output_dir / "BVG_Plan_Metadata.csv", index=False,
+    table.to_csv(output_dir / "Plan_Results.csv", index=False,
                  sep=settings.CSV_SEPARATOR, encoding=settings.CSV_ENCODING)
-    write_excel(table, output_dir / "BVG_Plan_Metadata.xlsx")
+    write_excel(table, output_dir / "Plan_Results.xlsx")
     return int((table["Needs Review"] == "Yes").sum())
 
 
@@ -227,7 +227,7 @@ def plan_text(ocr, file_label):
 
 
 def write_plan_text(parts, output_dir):
-    """Writes BVG_Plan_Text.csv (one row per piece of text, all plans)."""
+    """Writes Text_Search.csv (one row per piece of text, all plans)."""
     table = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=PLAN_TEXT_COLUMNS)
-    table.to_csv(output_dir / "BVG_Plan_Text.csv", index=False,
+    table.to_csv(output_dir / "Text_Search.csv", index=False,
                  sep=settings.CSV_SEPARATOR, encoding=settings.CSV_ENCODING)

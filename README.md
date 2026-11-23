@@ -16,7 +16,7 @@ station name, scale, date and title. It was developed in the Bachelor's thesis o
 > 2. Download this program: green button **"Code"** → **"Download ZIP"** → unzip.
 > 3. In the program folder, open **PowerShell** and type `pip install -r requirements.txt` (only once).
 > 4. Put your plans (TIFF or PDF) into the folder **`input`** and type `python run_pipeline.py`.
-> 5. Open **`output\BVG_Plan_Metadata.xlsx`** in Excel.
+> 5. Open **`output\Plan_Results.xlsx`** in Excel.
 
 ---
 
@@ -152,11 +152,11 @@ All results are written into the folder **`output`**:
 
 | File | What it contains | Who it is for |
 |---|---|---|
-| **`BVG_Plan_Metadata.xlsx`** | **The main result – open this one.** One row per plan with the 8 fields, formatted for reading, plus a second sheet "Column Guide" | Everyone |
-| `BVG_Plan_Metadata.csv` | The same table as a plain CSV file (comma-separated, UTF-8) | For importing into other systems |
-| **`BVG_Plan_Text.csv`** | **All text read on each plan**, one row per piece of text, with the area of the plan where it is written and how well it could be read | For searching any word (see section 6.2) |
-| `processing_log.csv` | Technical details per plan (resolution, rotation, time, errors) | For checking problems |
-| `technical\bvg_ocr_full.csv` | The complete text recognition output, with exact positions (in pixels) and confidence scores | Not needed for daily use – for checking the results and for further development |
+| **`Plan_Results.xlsx`** | **The main result – open this one.** One row per plan with the 8 fields, formatted for reading, plus a second sheet "Column Guide" | Everyone |
+| `Plan_Results.csv` | The same table as a plain CSV file (comma-separated, UTF-8) | For importing into other systems |
+| **`Text_Search.csv`** | **All text read on each plan**, one row per piece of text, with the area of the plan where it is written and how well it could be read | For searching any word (see section 6.2) |
+| `technical\OCR_Full_Output.csv` | The complete text recognition output, with exact positions (in pixels) and confidence scores | Not needed for daily use – for checking the results and for further development |
+| `technical\Processing_Log.csv` | Technical details per plan (resolution, rotation, time, errors) | For checking problems |
 | `_work` (folder) | Intermediate files of each plan, including the recognized text. **Do not delete it while the program is running** – it lets the program skip plans that were already read | The program itself |
 
 **Tip:** open the **`.xlsx`** file in Excel. If you open a `.csv` file in Excel, Excel may change how
@@ -166,7 +166,7 @@ some values look (for example, text such as `116` is shown as a number). The fil
 
 ## 6. How to read the result files
 
-### 6.1 The main table (`BVG_Plan_Metadata.xlsx` / `.csv`)
+### 6.1 The main table (`Plan_Results.xlsx` / `.csv`)
 
 | Column | Meaning |
 |---|---|
@@ -190,13 +190,16 @@ some values look (for example, text such as `116` is shown as a number). The fil
 - **Empty cell** → nothing was found; there is nothing to check (it is listed in *Missing Fields*).
 - Station names, titles and keywords stay **in German, exactly as written** on the plans.
 
-### 6.2 All text read (`BVG_Plan_Text.csv`)
+### 6.2 All text read (`Text_Search.csv`)
+
+Construction plans contain many numbers (for example dimensions such as `1082` or `r=30`); they are
+listed too, because the file contains everything that was read.
 
 | Column | Meaning |
 |---|---|
 | File Name | The plan file |
 | Area on Plan | Where on the plan the text is written: `top left`, `top centre`, `top right`, `middle left`, `middle`, `middle right`, `bottom left`, `bottom centre`, `bottom right`. Approximate – it helps you find the text when you open the scan (the title block is usually `bottom right`) |
-| Text | The text as it was read, in German. It can contain reading errors |
+| Text | The text as it was read, in German. It can contain reading errors (e.g. `Laufsleg` instead of `Laufsteg`) – search for a part of the word if you find nothing |
 | Reading Quality | How sure the program is that it read the text correctly: `High`, `Medium` or `Low`. Treat `Low` with care |
 
 The rows of each plan are sorted area by area (top left first), and inside each area line by line.
@@ -253,7 +256,7 @@ version 1.0, except for one plan number (one more number that is written on the 
 | The program is very slow | Normal for very large scans (up to about 3 minutes per plan) |
 | A value is wrong | Check rows with **Needs Review = Yes** first; see section 7 for each field's reliability |
 | Numbers or dates look strange in a `.csv` file | Excel changes the display of CSV files. Open the `.xlsx` file instead; the CSV file itself is correct |
-| `BVG_Plan_Text.csv` is too large for Excel | Excel can show about 1 million rows (roughly 4,000–5,000 plans). For more plans, run the program on smaller groups of plans (`--input` and `--output`) |
+| `Text_Search.csv` is too large for Excel | Excel can show about 1 million rows (roughly 4,000–5,000 plans). For more plans, run the program on smaller groups of plans (`--input` and `--output`) |
 
 ---
 
@@ -292,7 +295,7 @@ This part follows the HTW Berlin guide *"Documentation of Data & Code in Final T
 | November 2026 | Development of the field rules on 12 development plans |
 | 21.11.2026 | Final test of version 1.0 on 30 test plans; version 2.0 |
 | 22.11.2026 | New result files (Excel and CSV), run on all 42 plans, installation test from GitHub |
-| 23.11.2026 | Text file for staff (`BVG_Plan_Text.csv`), sources of the station list completed, documentation completed |
+| 23.11.2026 | Text file for staff (`Text_Search.csv`), sources of the station list completed, documentation completed |
 
 ## 12. Which? How much? – Data formats and size
 
@@ -304,11 +307,11 @@ This part follows the HTW Berlin guide *"Documentation of Data & Code in Final T
 
 | File | Format | Size (42 plans) |
 |---|---|---|
-| `BVG_Plan_Metadata.xlsx` | Excel | about 40 KB |
-| `BVG_Plan_Metadata.csv` | CSV (comma, UTF-8) | about 60 KB |
-| `BVG_Plan_Text.csv` | CSV (comma, UTF-8) | under 1 MB |
-| `technical/bvg_ocr_full.csv` | CSV (comma, UTF-8) | about 1 MB |
-| `processing_log.csv` | CSV | under 10 KB |
+| `Plan_Results.xlsx` | Excel | about 40 KB |
+| `Plan_Results.csv` | CSV (comma, UTF-8) | about 60 KB |
+| `Text_Search.csv` | CSV (comma, UTF-8) | under 1 MB |
+| `technical/OCR_Full_Output.csv` | CSV (comma, UTF-8) | about 1 MB |
+| `technical/Processing_Log.csv` | CSV | under 10 KB |
 | `_work/` | Intermediate files per plan | about 750 MB |
 
 **In this repository:** Python code (`.py`), station list (`.csv`, 176 stations with 213 current
@@ -362,7 +365,7 @@ development is documented in the thesis (Appendix A).
 - **Sensitive data:** the plans and BVG's metadata table are **confidential**. They are not part
   of this repository; the file `.gitignore` excludes `input/`, `output/` and all plan and result files.
 - **Personal data:** the plans can contain names of people (e.g. draftsmen or approvers in the
-  title block). These names can appear in the result files (*Keywords*, `BVG_Plan_Text.csv`, `bvg_ocr_full.csv`).
+  title block). These names can appear in the result files (*Keywords*, `Text_Search.csv`, `OCR_Full_Output.csv`).
   **Treat all result files as confidential, like the plans themselves.**
 - **Consent and anonymization:** no persons were surveyed and no personal data were collected on
   purpose, so no declarations of consent were needed. Names that appear on the plans are not
@@ -385,7 +388,7 @@ bvg_plan_ocr/
 ├── LICENSE                  license of the program code (MIT)
 ├── input/                   put plans here (not part of the repository)
 ├── output/                  results appear here (not part of the repository)
-│   ├── technical/           full text recognition output with positions (bvg_ocr_full.csv)
+│   ├── technical/           OCR output with positions (OCR_Full_Output.csv) and Processing_Log.csv
 │   └── _work/               intermediate files per plan, used for re-runs
 ├── resources/
 │   ├── stations.csv         176 stations with 213 current and former names
@@ -405,8 +408,8 @@ folders, so this file keeps them in the repository.)
 
 **File naming conventions**
 - Input plans: any file name (the program does not rely on file names).
-- Result files: fixed names (`BVG_Plan_Metadata.xlsx`, `BVG_Plan_Metadata.csv`,
-  `BVG_Plan_Text.csv`, `processing_log.csv`, `technical/bvg_ocr_full.csv`); each run overwrites them.
+- Result files: fixed names (`Plan_Results.xlsx`, `Plan_Results.csv`, `Text_Search.csv`,
+  `technical/OCR_Full_Output.csv`, `technical/Processing_Log.csv`); each run overwrites them.
 - Code: lower case with underscores, named after what the file does (e.g. `creation_date.py`).
 - Versions: Git tags `v1.0` and `v2.0`.
 
@@ -436,8 +439,8 @@ folders, so this file keeps them in the repository.)
   - not changed on purpose: the scale rule (accepting misread forms would create false scales
     from dimensions) and sketch numbers ("SK …" also appears as a reference to other sheets)
   - new result files: formatted Excel file and clean CSV with English column names
-    (`BVG_Plan_Metadata`); "not found" is reported in the column *Missing Fields*, and
+    (`Plan_Results`); "not found" is reported in the column *Missing Fields*, and
     *Needs Review* marks only values that were found but may be wrong
-  - all text read is also written in a simple form for staff (`BVG_Plan_Text.csv`: area of the plan
-    and reading quality in words); the full technical output moved to `output/technical/`
+  - all text read is also written in a simple form for staff (`Text_Search.csv`: area of the plan
+    and reading quality in words); the full OCR output and the processing log moved to `output/technical/`
   - these output changes do not change any extracted value

@@ -5,11 +5,11 @@
 1. Put the plans (TIFF or PDF, any file name, subfolders allowed) into the folder  input/
 2. Run the command above.
 3. The results appear in the folder  output/ :
-     BVG_Plan_Metadata.xlsx   one row per plan with the extracted fields, formatted in BVG colours (for reading)
-     BVG_Plan_Metadata.csv    the same table as a plain CSV file (for importing into other systems)
-     BVG_Plan_Text.csv        all text read on each plan, with the area of the plan and a reading quality
-     processing_log.csv       technical details per plan (rotation, resolution, time, errors)
-     technical/bvg_ocr_full.csv   full OCR output with positions and scores (for checking and further work)
+     Plan_Results.xlsx        one row per plan with the extracted fields, formatted in BVG colours (for reading)
+     Plan_Results.csv         the same table as a plain CSV file (for importing into other systems)
+     Text_Search.csv          all text read on each plan, with the area of the plan and a reading quality
+     technical/OCR_Full_Output.csv  full OCR output with positions and scores (for checking and further work)
+     technical/Processing_Log.csv   technical details per plan (rotation, resolution, time, errors)
 
 Plans that were already read are skipped when the command is run again (the OCR tables are kept
 in output/_work/). Use  --redo  to read all plans again. Other folders:  --input  and  --output .
@@ -105,9 +105,9 @@ def main():
         clean_rows.append({**base, **extract_all(ocr)})
         label = f"{base['folder']}/{base['file_name']}" if base["folder"] else base["file_name"]
         text_parts.append(plan_text(ocr, label))
-        dump = ocr[["box_id", "text", "ocr_score", "x1", "y1", "x2", "y2", "vertical", "turn", "score"]].rename(
+        full = ocr[["box_id", "text", "ocr_score", "x1", "y1", "x2", "y2", "vertical", "turn", "score"]].rename(
             columns={"turn": "read_turned", "score": "detection_score"})
-        ocr_parts.append(dump.assign(**base)[list(base) + list(dump.columns)])
+        ocr_parts.append(full.assign(**base)[list(base) + list(full.columns)])
 
     output_dir.mkdir(parents=True, exist_ok=True)
     csv = dict(index=False, sep=settings.CSV_SEPARATOR, encoding=settings.CSV_ENCODING)
@@ -116,8 +116,8 @@ def main():
     technical = output_dir / "technical"
     technical.mkdir(exist_ok=True)
     if ocr_parts:
-        pd.concat(ocr_parts, ignore_index=True).to_csv(technical / "bvg_ocr_full.csv", **csv)
-    pd.DataFrame(log_rows).to_csv(output_dir / "processing_log.csv", **csv)
+        pd.concat(ocr_parts, ignore_index=True).to_csv(technical / "OCR_Full_Output.csv", **csv)
+    pd.DataFrame(log_rows).to_csv(technical / "Processing_Log.csv", **csv)
 
     failed = sum(s == "failed" for _, s, _ in status.values())
     print(f"Done. Plans: {len(plans)} | failed: {failed} | marked for review: {review}")
