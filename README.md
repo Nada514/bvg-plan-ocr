@@ -2,7 +2,7 @@
 
 This program reads scanned historical construction plans of the BVG (TIFF or PDF) and
 extracts eight metadata fields from the text written on each plan. It was developed in the
-Bachelor's thesis of Nada ElNaggar (HTW Berlin, supervisor Prof. Dr. Katharina Simbeck, 2026).
+Bachelor's thesis of Nada Elnaggar (HTW Berlin, supervisor Prof. Dr. Katharina Simbeck, 2026).
 
 **Version 2.0.** Version 1.0 is the version evaluated in the thesis; version 2.0 contains improved
 rules for the creation date and the plan number (see "Versions" below).
