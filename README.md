@@ -203,6 +203,6 @@ Development October–November 2026; final test of version 1.0 on 21.11.2026; ve
 21.11.2026; new output files and run on all 42 plans on 22.11.2026.
 
 ### Author and license
-Author: Nada ElNaggar, HTW Berlin (Bachelor's thesis, Business Informatics).
+Author: Nada Elnaggar, HTW Berlin (Bachelor's thesis, Business Informatics).
 Supervisor: Prof. Dr. Katharina Simbeck.
 License: see `LICENSE`.
