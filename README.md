@@ -52,17 +52,17 @@ Scanned plans  →  Read all text on the plan  →  Pick out the useful informat
  (TIFF / PDF)          (text recognition)          (8 fields, see below)           (one row per plan)
 ```
 
-The program finds these **8 fields**:
+The program finds these **8 fields** (the example values are invented and only show the format):
 
 | Field | Example |
 |---|---|
-| Station name | Bismarckstraße |
+| Station name | Alexanderplatz |
 | Scale | 1:100 |
-| Creation date | 23.07.1998 |
+| Creation date | 15.03.1985 |
 | Stairs / escalator mentioned | Yes – Escalator |
-| Plan title | Einbau eines Aufzuges im U-Bhf Bismarckstraße |
-| Plan number | UBwE/374 |
-| Structure number | D073 |
+| Plan title | Grundriss Bahnsteigebene |
+| Plan number | UBwE/123 |
+| Structure number | D012 |
 | Keywords (all text read) | for searching any word on the plan |
 
 Everything runs **on your own computer**. No plan or result is sent anywhere.
@@ -158,14 +158,14 @@ All results are written into the folder **`output`**:
 |---|---|
 | File Name | The plan file in `input` (with its subfolder in front, if it is in one) |
 | Station (Current Name) | Today's name of the U-Bahn station the plan belongs to (empty = no station found) |
-| Station Name on Plan | The station name as written on the plan – can be a former name, e.g. "Danziger Straße" |
+| Station Name on Plan | The station name as written on the plan – can be a former name, e.g. "Danziger Straße" (today "Eberswalder Straße") |
 | Scale | Scale(s) on the plan, e.g. `1:50`. Several values = detail drawings with their own scale |
 | Creation Date | Date of the plan as `DD.MM.YYYY`. `XX` = part not known (e.g. `XX.12.1961`) |
 | Stairs / Escalator | `Yes` / `No` / `Unsure`: is a stairs word ("Treppe", "Fahrtreppe" …) written on the plan? |
 | Stairs Type | `Stairs`, `Escalator` or `Stairs + escalator` |
 | Plan Title | Title as written on the plan; ` \| ` marks a new line on the plan |
 | Plan Number | Drawing, sheet ("Blatt Nr.") and archive numbers found on the plan, separated by `;` |
-| Structure Number | Structure number derived from an archive stamp (e.g. stamp `D73-006` → `D073`) |
+| Structure Number | Structure number derived from an archive stamp (e.g. stamp `D12-345` → `D012`) |
 | Needs Review | `Yes` = a value **was found but may be wrong** – a person should check it |
 | Review Notes | Which value to check and why, e.g. `station: station found without a station marker` |
 | Missing Fields | Fields that were **not found** on the plan (their cells are empty) – for information only |
@@ -185,7 +185,7 @@ and the results were compared with BVG's own metadata table:
 
 | Field | Version 1.0 (independent test) | Version 2.0 on the same plans* | What this means for you |
 |---|---|---|---|
-| Station | 22 of 30 correct | 22 of 30 | Check stations marked "without a station marker" |
+| Station | 22 of 30 correct | 23 of 30 | Check stations marked "without a station marker" |
 | Scale | Found on 19 of 26 plans – **all 19 correct** | unchanged | Values can be trusted; empty = not readable |
 | Creation date | Correct to the month on 11 of 25, 4 wrong | 14 of 25, 2 wrong | **Check:** plans often carry several dates |
 | Stairs | 27 of 30 correct | unchanged | Stairs that are only drawn (no label) are not found |
@@ -207,8 +207,8 @@ version 1.0, except for one plan number (one more number that is written on the 
   takes the earliest complete date, which can be the date of a revision or of another document.
   Handwritten or misread dates (e.g. "4927" for 1927) cannot be corrected.
 - **Plan numbers:** the program knows labelled numbers ("Zeichnung Nr.", "Zg.-Nr.", "Blatt Nr."),
-  typical BVG formats (`UBwE/374`, archive stamps like `S510-023`) and short codes standing alone
-  in the title block (`DE-016`, `E 001`). Other formats (e.g. sketch numbers `SK 4995`) are not found.
+  typical BVG formats (e.g. `UBwE/123`, archive stamps like `S123-456`) and short codes standing
+  alone in the title block (e.g. `DE-012`). Other formats (e.g. sketch numbers `SK 1234`) are not found.
 - **Rotation:** a plan is turned automatically only if the program is very sure about its
   orientation. Plans scanned sideways are otherwise read sideways, which gives worse results.
 
@@ -329,6 +329,10 @@ development is documented in the thesis (Appendix A).
 - **Personal data:** the plans can contain names of people (e.g. draftsmen or approvers in the
   title block). These names can appear in the result files (*Keywords*, `bvg_ocr_full.csv`).
   **Treat all result files as confidential, like the plans themselves.**
+- **Consent and anonymization:** no persons were surveyed and no personal data were collected on
+  purpose, so no declarations of consent were needed. Names that appear on the plans are not
+  analysed; instead of anonymizing them, the result files are kept confidential and are only
+  handed over to BVG.
 - **Local processing:** the program runs completely on the local computer; no data is sent
   anywhere. Internet is only needed once to download the models.
 - **Copyright:** the plans are owned by BVG. The program code is the author's own work (MIT
