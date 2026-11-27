@@ -1,4 +1,4 @@
-"""Field 5: plan title (thesis notebook 11, rule version v3, unchanged).
+"""Field 5: plan title (thesis notebook 11, rule version v3, review rule v3.1).
 
 On modern plans, the title stands in the title block at the bottom right: the rule starts
 from typical title words ("U-Bahnhof", "Lageplan", "Umbau" ...) and adds the lines stacked
@@ -13,6 +13,7 @@ REVIEW_SCORE = 0.80          # below this mean confidence, a human should check 
 MAX_GAP      = 1.3           # title lines are at most 1.3 line heights apart
 MIN_HEIGHT   = 0.67          # a title line has at least 2/3 of the letter height of its neighbour
 MIN_ANCHOR_LETTERS = 8       # an anchor line needs at least 8 letters
+STAMP_WORDS = ("schlechtes", "original", "unscharf")   # stamps and notes, not real titles
 
 ANCHORS = ("bahnhof", "ubhf", "ubahn", "haltestelle", "lageplan", "grundris", "schnitt", "ansicht",
            "einbau", "umbau", "neubau", "rekonstruktion", "sanierung")
@@ -167,13 +168,19 @@ def extract_title(ocr):
             "conf": round(float(lines["ocr_score"].mean()), 2)}
 
 
+def looks_like_junk(title):
+    """Too short, or just a stamp word: a person should check it. (review rule v3.1)"""
+    return letters(title) < 8 or any(w in norm(title) for w in STAMP_WORDS)
+
+
 def extract(ocr):
     r = extract_title(ocr)
-    review = r["source"] != "title block" or r["conf"] is None or r["conf"] < REVIEW_SCORE
     if not r["title"]:
         reason = "no title found"
-    elif r["source"] != "title block":
-        reason = "title taken from the largest heading (no title block found)"
-    else:
+    elif r["conf"] is None or r["conf"] < REVIEW_SCORE:
         reason = "title hard to read (low OCR confidence)"
-    return {"plan_title": r["title"], "plan_type": plan_type(r["title"]), "review": reason if review else ""}
+    elif looks_like_junk(r["title"]):
+        reason = "title looks like a stamp or is too short"
+    else:
+        reason = ""
+    return {"plan_title": r["title"], "plan_type": plan_type(r["title"]), "review": reason}
