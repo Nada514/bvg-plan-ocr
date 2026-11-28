@@ -142,7 +142,7 @@ automatically the first time the program runs.
 
 1. **Put the plans into the folder `input`.**
    TIFF and PDF files are accepted, with any file name. Subfolders are allowed.
-   Other files (for example CAD drawings such as `.dwg`) are skipped. To read a CAD drawing,
+   Other files (for example CAD drawings such as `.dxf` or `.dwg`) are skipped. To read a CAD drawing,
    first save it as a PDF in the CAD program and put the PDF into `input`.
 2. **Open PowerShell in the program folder** (as in step 3.3) and type:
    ```
