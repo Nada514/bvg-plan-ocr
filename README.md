@@ -14,7 +14,7 @@ station name, scale, date and title. It was developed in the Bachelor's thesis o
 > **Quick start in 5 steps** (details in sections 3 and 4)
 > 1. Install **Python 3.11** (tick "Add Python to PATH").
 > 2. Download this program: green button **"Code"** → **"Download ZIP"** → unzip.
-> 3. In the program folder, open **PowerShell** and type `pip install -r requirements.txt` (only once).
+> 3. In the program folder, open **PowerShell** and type `python -m pip install -r requirements.txt` (only once).
 > 4. Put your plans (TIFF or PDF) into the folder **`input`** and type `python run_pipeline.py`.
 > 5. Open **`output\Plan_Results.xlsx`** in Excel.
 
@@ -98,12 +98,23 @@ Everything runs **on your own computer**. No plan or result is sent anywhere.
 1. On this GitHub page, click the green button **"Code"** (top right of the file list).
 2. Click **"Download ZIP"**.
 3. Unzip the file into a folder of your choice, for example `C:\BVG_Plan_Reader`.
-   The unzipped folder is called **`bvg-plan-ocr-main`**. This is the program folder.
+   The unzipped folder is called **`bvg-plan-ocr-main`**. Windows often creates **a second
+   folder with the same name inside it**. Open the folders until you see the file
+   `run_pipeline.py` – **that** folder is the program folder.
 
 ### Step 3.3 – Open PowerShell in the program folder
 1. Open the program folder in Windows Explorer (the folder that contains `run_pipeline.py`).
 2. Click into the **address bar** at the top, type `powershell` and press **Enter**.
 3. A blue or black window opens. This is where you type the commands below.
+4. Check that you are in the right folder: type `dir` and press Enter. The list must contain
+   `run_pipeline.py`.
+
+**If PowerShell opened somewhere else** (for example it shows `PS C:\Windows\System32>`):
+click into the address bar of the program folder in Windows Explorer, copy the path with
+**Ctrl + C**, then type `cd "`, paste the path with **Ctrl + V**, type `"` and press Enter, for example:
+```
+cd "C:\BVG_Plan_Reader\bvg-plan-ocr-main\bvg-plan-ocr-main"
+```
 
 ### Step 3.4 – Check Python
 Type this and press Enter:
@@ -116,9 +127,11 @@ It should show `Python 3.11.…`. If it shows an error, repeat step 3.1 and make
 ### Step 3.5 – Install the program packages
 Type this and press Enter:
 ```
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
-This takes a few minutes. The text recognition models (about 250 MB) are downloaded
+This takes a few minutes. (Use exactly this command: on some computers, especially company
+computers, the short command `pip install …` is blocked by Windows, but `python -m pip` works.)
+The text recognition models (about 250 MB) are downloaded
 automatically the first time the program runs.
 
 **Installation done.** You never need to repeat it on this computer.
@@ -129,6 +142,8 @@ automatically the first time the program runs.
 
 1. **Put the plans into the folder `input`.**
    TIFF and PDF files are accepted, with any file name. Subfolders are allowed.
+   Other files (for example CAD drawings such as `.dwg`) are skipped. To read a CAD drawing,
+   first save it as a PDF in the CAD program and put the PDF into `input`.
 2. **Open PowerShell in the program folder** (as in step 3.3) and type:
    ```
    python run_pipeline.py
@@ -251,6 +266,8 @@ version 1.0, except for one plan number (one more number that is written on the 
 | Problem | Solution |
 |---|---|
 | `python` is not recognized | Python is not installed or "Add Python to PATH" was not ticked → repeat step 3.1 |
+| `can't open file '...\run_pipeline.py'` or `No such file or directory` | PowerShell is not in the program folder (e.g. it shows `C:\Windows\System32`) → go to the program folder as described in step 3.3 |
+| `Program 'pip.exe' failed to run: An Application Control policy has blocked this file` | Windows blocks the short `pip` command → type `python -m pip install -r requirements.txt` instead |
 | A plan shows `failed` | Usually the computer ran out of memory. Close other programs and run `python run_pipeline.py` again – only the failed plans are read again |
 | `PermissionError` | A result file is still open in Excel. Close it and run again |
 | The program is very slow | Normal for very large scans (up to about 3 minutes per plan) |
@@ -296,6 +313,7 @@ This part follows the HTW Berlin guide *"Documentation of Data & Code in Final T
 | 21.11.2026 | Final test of version 1.0 on 30 test plans; version 2.0 |
 | 22.11.2026 | New result files (Excel and CSV), run on all 42 plans, installation test from GitHub |
 | 23.11.2026 | Text file for staff (`Text_Search.csv`), sources of the station list completed, documentation completed |
+| 26.–27.11.2026 | Test as a BVG staff member: fresh download from GitHub, installation following this README only, run on 58 new, never-seen plans (56 scans read without errors; 2 CAD files skipped). Installation help in this README improved afterwards |
 
 ## 12. Which? How much? – Data formats and size
 
@@ -358,6 +376,10 @@ development is documented in the thesis (Appendix A).
   names reproduce the thesis result (22 of 30).
 - **Installation test:** the program was downloaded from GitHub into an empty folder, installed
   with `requirements.txt` and run on a TIFF and a PDF plan without errors.
+- **Test as a BVG staff member:** the program was downloaded again from GitHub and installed by
+  following only this README, then run on 58 new plans that were never used before. All 56 scanned
+  plans were read without errors; the 2 CAD files were skipped. Two installation problems found in
+  this test (PowerShell in the wrong folder, `pip` blocked by Windows) are now explained in sections 3 and 8.
 - **Review marking:** uncertain values are marked *Needs Review* so that a person checks them.
 
 ## 15. Data protection
@@ -381,7 +403,7 @@ development is documented in the thesis (Appendix A).
 
 **Folder structure**
 ```
-bvg_plan_ocr/
+bvg-plan-ocr/               (called bvg-plan-ocr-main after "Download ZIP")
 ├── run_pipeline.py          the program to run (start here)
 ├── requirements.txt         Python packages and versions
 ├── README.md                this documentation
